@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <meta charset="UTF-8">
+<head>
+</head>
+
+<body>
+  
+  <script type="text/javascript">
+    var xmlString = '<?xml version="1.0" encoding="utf-8"?>\
+      <Organization> \
+        <!-- 组织树   根节点 --> \
+        <Department coding="001" name="根节点" modifytime="" sn="" memo="" deptype="1" depsort="0" chargebooth="0"> \
+          <Device id="1000054" /> \
+          <Channel id="1000055$7$0$0" /> \
+          <!-- 子节点1 --> \
+          <Department coding="001001" name="默认工地(10000000)" modifytime="" sn="" memo="" deptype="1" depsort="1" chargebooth="0"> \
+          <Department coding="001001001" name="总部公共功能演示" modifytime="" sn="" memo="" deptype="1" depsort="1" chargebooth="0"> \
+            <Department coding="001001001001" name="XX项目演示" modifytime="" sn="" memo="" deptype="1" depsort="1" chargebooth="0" /> \
+          </Department> \
+          </Department> \
+          </Department> \
+        </Organization>'
+    
+    function getXmlDocumentByXmlString(xmlString) {
+      var xmlDoc = null;
+      if (window.DOMParser) {
+        var parser = new DOMParser();
+        xmlDoc = parser.parseFromString(xmlString, "text/xml");
+      } else {
+        //IE
+        xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+        xmlDoc.async = "false";
+        xmlDoc.loadXML(xmlString);
+      }
+      return xmlDoc;
+    }
+    function convertToJSON(xmlDoc) {
+      //准备JSON字符串和缓存（提升性能）
+      var jsonStr = "";
+      var buffer = new Array();
+      //获取xml文档的所有子节点
+      var nodeList = xmlDoc.childNodes;
+      console.log(nodeList);
+      generate(Array.prototype.filter.call(nodeList, function (item) {
+        return item.nodeType != 3 && item.nodeType != 8
+      }));
+
+      /**
+       * 中间函数，用于递归解析xml文档对象，并附加到json字符串中
+       * @param node_list xml文档的的nodeList
+       */
+      function generate(node_list) {
+
+        for (var i = 0; i < node_list.length; i++) {
+          var curr_node = node_list[i];
+          //忽略子节点中的换行和空格
+          if (curr_node.nodeType == 3 || curr_node.nodeType == 8) {//3换行和空格 8对应注释节点
+            continue;
+          }
+          buffer.push("{" + "\"" + curr_node.nodeName + "\"");//拼入节点名称
+          buffer.push(":{");
+          //遍历当前节点的attributes生产当前节点json信息
+          var len = curr_node.attributes.length;
+          for (len; len > 0; len--) {
+            buffer.push("\"" + curr_node.attributes[len - 1].name + "\"");//属性的key
+            buffer.push(":");//
+            buffer.push("\"" + curr_node.attributes[len - 1].value + "\"");//属性的value
+            if (len > 1) {
+              buffer.push(",");
+            }
+          }
+          //如果有属性有children就添加，
+          if (curr_node.childNodes.length > 0 && curr_node.attributes.length > 0) {
+            buffer.push(",");
+          }
+          //如果子节点还包括子节点，则继续进行递归遍历
+          if (curr_node.childNodes.length > 0) {
+            //buffer.push("\"" + curr_node.nodeName + "\": {");
+            buffer.push("\"" + "children" + "\"" + ":[");
+			//兼容IE8以上（不包含IE8）
+            generate(Array.prototype.filter.call(curr_node.childNodes, function (item) {
+              return item.nodeType != 3 && item.nodeType != 8
+            }));
+            buffer.push("]");
+          }
+          //添加末尾的"}"
+          buffer.push("}");
+          buffer.push("}");
+          if (i < node_list.length - 1) {
+            buffer.push(",");
+          }
+
+
+        }
+      }
+      jsonStr = buffer.join("");
+      return jsonStr;
+    }
+    console.log(convertToJSON(getXmlDocumentByXmlString(xmlString)))
+
+  </script>
+</body>
+
+</html>
