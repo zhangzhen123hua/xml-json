@@ -45,11 +45,6 @@
       generate(Array.prototype.filter.call(nodeList, function (item) {
         return item.nodeType != 3 && item.nodeType != 8
       }));
-
-      /**
-       * 中间函数，用于递归解析xml文档对象，并附加到json字符串中
-       * @param node_list xml文档的的nodeList
-       */
       function generate(node_list) {
 
         for (var i = 0; i < node_list.length; i++) {
@@ -78,7 +73,7 @@
           if (curr_node.childNodes.length > 0) {
             //buffer.push("\"" + curr_node.nodeName + "\": {");
             buffer.push("\"" + "children" + "\"" + ":[");
-			//兼容IE8以上（不包含IE8）
+			        //兼容IE8以上（不包含IE8）
             generate(Array.prototype.filter.call(curr_node.childNodes, function (item) {
               return item.nodeType != 3 && item.nodeType != 8
             }));
